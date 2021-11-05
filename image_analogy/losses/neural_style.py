@@ -1,5 +1,5 @@
 '''This is from the keras neural style example.'''
-from keras import backend as K
+from tensorflow.keras import backend as K
 
 
 # the gram matrix of an image tensor (feature-wise outer product)

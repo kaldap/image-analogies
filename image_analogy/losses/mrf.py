@@ -1,4 +1,5 @@
-from keras import backend as K
+import tensorflow as tf
+from tensorflow.keras import backend as K
 
 from . import patches
 
@@ -34,6 +35,7 @@ def mrf_loss(source, combination, patch_size=3, patch_stride=1):
     source_patches, source_patches_norm = patches.make_patches(source, patch_size, patch_stride)
     # find best patches and calculate loss
     patch_ids = patches.find_patch_matches(combination_patches, combination_patches_norm, source_patches / source_patches_norm)
-    best_source_patches = K.reshape(source_patches[patch_ids], K.shape(combination_patches))
+    # best_source_patches = K.reshape(source_patches[patch_ids], K.shape(combination_patches))
+    best_source_patches = tf.gather_nd(source_patches, patch_ids)
     loss = K.sum(K.square(best_source_patches - combination_patches)) / patch_size ** 2
     return loss

@@ -1,20 +1,29 @@
+import sys
 from itertools import product
 
 import numpy as np
-from keras import backend as K
+import torch
+from tensorflow.keras import backend as K
+from tensorflow import image as TFI
+import tensorflow as tf
 from sklearn.feature_extraction.image import reconstruct_from_patches_2d
 
 
 def make_patches(x, patch_size, patch_stride):
     '''Break image `x` up into a bunch of patches.'''
-    from theano.tensor.nnet.neighbours import images2neibs
+    # from theano.tensor.nnet.neighbours import images2neibs
     x = K.expand_dims(x, 0)
-    patches = images2neibs(x,
-        (patch_size, patch_size), (patch_stride, patch_stride),
-        mode='valid')
+    x = K.permute_dimensions(x, (0, 2, 3, 1))
+    # patches = images2neibs(x,
+    #     (patch_size, patch_size), (patch_stride, patch_stride),
+    #     mode='valid')
+
     # neibs are sorted per-channel
-    patches = K.reshape(patches, (K.shape(x)[1], K.shape(patches)[0] // K.shape(x)[1], patch_size, patch_size))
-    patches = K.permute_dimensions(patches, (1, 0, 2, 3))
+    patches = TFI.extract_patches(x, [1, patch_size, patch_size, 1], [1, patch_stride, patch_stride, 1], [1, 1, 1, 1], 'VALID')
+    patches = K.reshape(patches, (K.shape(patches)[1] * K.shape(patches)[2], patch_size, patch_size, K.shape(x)[3]))
+    patches = K.permute_dimensions(patches, (0, 3, 1, 2))  # Nebo 0231
+    # patches = K.reshape(patches, (K.shape(x)[1], K.shape(patches)[0] // K.shape(x)[1], patch_size, patch_size))
+    # patches = K.permute_dimensions(patches, (1, 0, 2, 3))
     patches_norm = K.sqrt(K.sum(K.square(patches), axis=(1,2,3), keepdims=True))
     return patches, patches_norm
 
@@ -50,14 +59,17 @@ def combine_patches(patches, out_shape):
 
 def find_patch_matches(a, a_norm, b):
     '''For each patch in A, find the best matching patch in B'''
-    convs = None
-    if K.backend() == 'theano':
-        # HACK: This was not being performed on the GPU for some reason.
-        from theano.sandbox.cuda import dnn
-        if dnn.dnn_available():
-            convs = dnn.dnn_conv(
-                img=a, kerns=b[:, :, ::-1, ::-1], border_mode='valid')
-    if convs is None:
-        convs = K.conv2d(a, b[:, :, ::-1, ::-1], border_mode='valid')
-    argmax = K.argmax(convs / a_norm, axis=1)
+    b = b[:, :, ::-1, ::-1]
+    #convs = K.reshape(K.batch_dot(
+    #    K.reshape(a, (K.shape(a)[0] * K.shape(a)[1], K.shape(a)[2] * K.shape(a)[3])),
+    #    K.reshape(b, (K.shape(b)[0] * K.shape(b)[1], K.shape(b)[2] * K.shape(b)[3])),
+    #    axes=1
+    #), (K.shape(a)[0], K.shape(a)[1], 1, 1))
+
+    a = K.permute_dimensions(a, (0, 2, 3, 1))
+    b = K.permute_dimensions(b, (2, 3, 1, 0))
+    convs = K.conv2d(a, b, padding='valid', data_format='channels_last')
+    convs = K.reshape(convs, (K.shape(convs)[0], K.shape(convs)[3]))
+    a_norm = K.reshape(a_norm, (K.shape(a_norm)[0], 1))
+    argmax = K.reshape(K.argmax(convs / a_norm, axis=1), (K.shape(a_norm)[0], 1))
     return argmax

@@ -1,7 +1,7 @@
 import time
 
 import numpy as np
-from keras import backend as K
+from tensorflow.keras import backend as K
 
 from image_analogy.losses.analogy import analogy_loss
 from image_analogy.losses.core import content_loss

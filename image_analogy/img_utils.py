@@ -1,12 +1,30 @@
 import numpy as np
-from scipy.misc import imread, imresize
+from imageio import imread
+from PIL import Image
 
 from . import vgg16
 
 
 # util function to open, resize and format pictures into appropriate tensors
 def load_image(image_path):
-    return imread(image_path)# , mode='RGB')  # NOTE: this mode kwarg requires v0.17
+    return imread(image_path) # , mode='RGB')  # NOTE: this mode kwarg requires v0.17
+
+
+def imresize(img, size, interp):
+    resample = 0
+    if interp == 'nearest':
+        resample = Image.NEAREST
+    elif interp == 'lanczos':
+        resample = Image.LANCZOS
+    elif interp == 'bilinear':
+        resample = Image.BILINEAR
+    elif interp == 'bicubic':
+        resample = Image.BICUBIC
+    elif interp == 'cubic':
+        resample = Image.CUBIC
+
+    return np.asarray(Image.fromarray(img).resize((size[1], size[0]), resample))
+
 
 
 # util function to open, resize and format pictures into appropriate tensors
@@ -25,5 +43,16 @@ def deprocess_image(x, contrast_percent=0.0, resize=None):
         x = (x - min_x) * 255.0 / (max_x - min_x)
     x = np.clip(x, 0, 255)
     if resize:
-        x = imresize(x, resize, interp='bicubic')
+        x = imresize((x * 255).astype(np.uint8), resize, interp='bicubic')
     return x.astype('uint8')
+
+
+def reshape_weights(weights):
+    kernel = np.asarray(weights)
+    if not 3 <= kernel.ndim <= 5:
+        raise ValueError('Invalid kernel shape:', kernel.shape)
+    slices = [slice(None, None, -1) for _ in range(kernel.ndim)]
+    no_flip = (slice(None, None), slice(None, None))
+    slices[-2:] = no_flip
+    return np.copy(kernel[tuple(slices)]).transpose((2, 3, 1, 0)) # use `arr[tuple(seq)]` instead of `arr[seq]
+    return weights

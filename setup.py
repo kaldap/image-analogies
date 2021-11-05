@@ -14,6 +14,7 @@ setup(
         'scripts/make_image_analogy.py'
     ],
     install_requires=[
+        'Cython>=0.29',
         'h5py>=2.5.0',
         'Keras>=1.0.0',
         'numpy>=1.10.4',
@@ -22,6 +23,5 @@ setup(
         'scipy>=0.17.0',
         'scikit-learn>=0.17.0',
         'six>=1.10.0',
-        'Theano>=0.8.2',
     ]
 )

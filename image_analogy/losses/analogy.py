@@ -1,5 +1,7 @@
 import numpy as np
-from keras import backend as K
+import tensorflow as tf
+from tensorflow.keras import backend as K
+
 
 from . import patches
 from .core import content_loss
@@ -17,7 +19,8 @@ def find_analogy_patches(a, a_prime, b, patch_size=3, patch_stride=1):
     # find best patches and calculate loss
     p = patches.find_patch_matches(b_patches, b_patches_norm, a_patches / a_patches_norm)
     #best_patches = a_prime_patches[p]
-    best_patches = K.reshape(a_prime_patches[p], K.shape(b_patches))
+    #best_patches = K.reshape(a_prime_patches[p], K.shape(b_patches))
+    best_patches = tf.gather_nd(a_prime_patches, p)
     f = K.function([], best_patches)
     best_patches = f([])
     return best_patches

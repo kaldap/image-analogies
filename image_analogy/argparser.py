@@ -1,7 +1,7 @@
 import argparse
 import os
 
-from keras import backend as K
+from tensorflow.keras import backend as K
 
 
 VGG_ENV_VAR = 'VGG_WEIGHT_PATH'
@@ -56,24 +56,24 @@ def parse_args():
     parser.add_argument('--analogy-w', dest='analogy_weight', type=float,
                         default=1.0, help='Weight for analogy loss.')
     parser.add_argument('--analogy-layers', dest='analogy_layers', action=CommaSplitAction,
-                        default=['conv3_1', 'conv4_1'],
+                        default=['block3_conv1', 'block4_conv1'],
                         help='Comma-separated list of layer names to be used for the analogy loss')
     parser.add_argument('--use-full-analogy', dest='use_full_analogy', action="store_true",
                         help='Use the full set of analogy patches (slower/more memory but maybe more accurate)')
     parser.add_argument('--mrf-w', dest='mrf_weight', type=float,
                         default=0.5, help='Weight for MRF loss between A\' and B\'')
     parser.add_argument('--mrf-layers', dest='mrf_layers', action=CommaSplitAction,
-                        default=['conv3_1', 'conv4_1'],
+                        default=['block3_conv1', 'block4_conv1'],
                         help='Comma-separated list of layer names to be used for the MRF loss')
     parser.add_argument('--b-content-w', dest='b_bp_content_weight', type=float,
                         default=0.0, help='Weight for content loss between B and B\'')
     parser.add_argument('--content-layers', dest='b_content_layers', action=CommaSplitAction,
-                        default=['conv3_1', 'conv4_1'],
+                        default=['block3_conv1', 'block4_conv1'],
                         help='Comma-separated list of layer names to be used for the content loss')
     parser.add_argument('--nstyle-w', dest='neural_style_weight', type=float,
                         default=0.0, help='Weight for neural style loss between A\' and B\'')
     parser.add_argument('--nstyle-layers', dest='neural_style_layers', action=CommaSplitAction,
-                        default=['conv2_1', 'conv3_1', 'conv4_1', 'conv5_1'],
+                        default=['block2_conv1', 'block3_conv1', 'block4_conv1', 'block5_conv1'],
                         help='Comma-separated list of layer names to be used for the neural style')
     parser.add_argument('--patch-size', dest='patch_size', type=int,
                         default=1, help='Patch size used for matching.')

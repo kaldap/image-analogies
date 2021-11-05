@@ -12,7 +12,7 @@ import time
 import image_analogy.argparser
 import image_analogy.main
 
-
+#--model=brute
 if __name__ == '__main__':
     args = image_analogy.argparser.parse_args()
     if args:
